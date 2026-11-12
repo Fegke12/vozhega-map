@@ -1,0 +1,113 @@
+[
+  {
+    "file": "orchid-macranthos.webp",
+    "species": "Cypripedium macranthos",
+    "author": "Anatoly Mikhaltsov",
+    "date": "2015-06-04",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "source": "https://commons.wikimedia.org/wiki/File:Cypripedium_macranthon.JPG",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/6/6c/Cypripedium_macranthon.JPG",
+    "changes": "Уменьшение до 1067×1600 и конвертация в WebP. Цвет и композиция сохранены.",
+    "caption": "Фотография вида, место съёмки не подтверждено как урочище «Северные орхидеи»."
+  },
+  {
+    "file": "orchid-calceolus.webp",
+    "species": "Cypripedium calceolus",
+    "author": "Anatoly Mikhaltsov",
+    "date": "2019-06-11",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "source": "https://commons.wikimedia.org/wiki/File:Орхидеи_Cypripedium_calceolus.jpg",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/d/de/%D0%9E%D1%80%D1%85%D0%B8%D0%B4%D0%B5%D0%B8_Cypripedium_calceolus.jpg",
+    "changes": "Уменьшение до 1067×1600 и конвертация в WebP. Цвет и композиция сохранены.",
+    "caption": "Фотография вида. Не фотография урочища."
+  },
+  {
+    "file": "orchid-calypso.webp",
+    "species": "Calypso bulbosa",
+    "author": "Anatoly Mikhaltsov",
+    "date": "2021-05-20",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "source": "https://commons.wikimedia.org/wiki/File:Calypso_bulbosa_var._bulbosa.jpg",
+    "original_url": "https://upload.wikimedia.org/wikipedia/commons/0/09/Calypso_bulbosa_var._bulbosa.jpg",
+    "changes": "Уменьшение до 1086×1600 и конвертация в WebP. Цвет и композиция сохранены.",
+    "caption": "Фотография вида в Омской области. Не фотография урочища."
+  },
+  {
+    "file": "lake-vozhe.webp",
+    "place": "Озеро Воже, Вологодская область",
+    "caption": "Заросли тростника обыкновенного на озере Воже",
+    "author": "Aleksandra S. Komarova",
+    "author_ru": "Александра С. Комарова",
+    "year": 2018,
+    "figure": 13,
+    "image_source_url": "https://binary.pensoft.net/fig/600089",
+    "download_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8795070.1/bdj-10-e77626-g013.jpg",
+    "dimensions": [
+      777,
+      518
+    ],
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "source_article": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8795070/",
+    "doi": "10.3897/BDJ.10.e77626",
+    "modifications": "WebP-конвертация, композиция и цвет сохранены.",
+    "downloaded": "2026-11-12",
+    "sha256": "15d3171a5a136afb6f1cdf5aa2b497da7196e1c182c0b95a4c63aae3664ae006",
+    "usage_note": "Подписывать реальное озеро. Нельзя выдавать за Пертозеро или Погореловское. Для Святого и Долгого статья указывает Вологодскую область без района в подписи.",
+    "attribution": "Заросли тростника обыкновенного на озере Воже. Фото Александра С. Комарова, 2018. Philippov et al., Biodiversity Data Journal 10:e77626 (2022), рис. 13. CC BY 4.0. Источник данных — NLM/PMC.",
+    "original_file": "vozhe-komarova-2018.jpg"
+  },
+  {
+    "file": "lake-svyatoe.webp",
+    "place": "Озеро Святое, Вологодская область",
+    "caption": "Озеро Святое с лесистым водосбором",
+    "author": "Dmitriy A. Philippov",
+    "author_ru": "Дмитрий А. Филиппов",
+    "year": 2019,
+    "figure": 2,
+    "image_source_url": "https://binary.pensoft.net/fig/599807",
+    "download_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8795070.1/bdj-10-e77626-g002.jpg",
+    "dimensions": [
+      800,
+      600
+    ],
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "source_article": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8795070/",
+    "doi": "10.3897/BDJ.10.e77626",
+    "modifications": "WebP-конвертация, композиция и цвет сохранены.",
+    "downloaded": "2026-11-12",
+    "sha256": "aea7c1e1917141a3dce10af2582a89d5e13e761fecd5fad8f308bd7e5580a4ec",
+    "usage_note": "Подписывать реальное озеро. Нельзя выдавать за Пертозеро или Погореловское. Для Святого и Долгого статья указывает Вологодскую область без района в подписи.",
+    "attribution": "Озеро Святое с лесистым водосбором. Фото Дмитрий А. Филиппов, 2019. Philippov et al., Biodiversity Data Journal 10:e77626 (2022), рис. 2. CC BY 4.0. Источник данных — NLM/PMC.",
+    "original_file": "svyatoe-philippov-2019.jpg"
+  },
+  {
+    "file": "lake-dolgoe.webp",
+    "place": "Озеро Долгое, Вологодская область",
+    "caption": "Озеро Долгое, пример озера речного типа",
+    "author": "Dmitriy A. Philippov",
+    "author_ru": "Дмитрий А. Филиппов",
+    "year": 2018,
+    "figure": 4,
+    "image_source_url": "https://binary.pensoft.net/fig/599818",
+    "download_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC8795070.1/bdj-10-e77626-g004.jpg",
+    "dimensions": [
+      800,
+      600
+    ],
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "source_article": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8795070/",
+    "doi": "10.3897/BDJ.10.e77626",
+    "modifications": "WebP-конвертация, композиция и цвет сохранены.",
+    "downloaded": "2026-11-12",
+    "sha256": "c019e6d6c82904b421ada05d4511dec5384d4d8e4ff6f23dcebcb0261fc21dec",
+    "usage_note": "Подписывать реальное озеро. Нельзя выдавать за Пертозеро или Погореловское. Для Святого и Долгого статья указывает Вологодскую область без района в подписи.",
+    "attribution": "Озеро Долгое, пример озера речного типа. Фото Дмитрий А. Филиппов, 2018. Philippov et al., Biodiversity Data Journal 10:e77626 (2022), рис. 4. CC BY 4.0. Источник данных — NLM/PMC.",
+    "original_file": "dolgoe-philippov-2018.jpg"
+  }
+]

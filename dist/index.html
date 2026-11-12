@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#f7f5ef" />
+    <meta
+      name="description"
+      content="Научная экспедиция по Вожегодскому округу. Настоящая карта, фотографии северной природы, четыре интерактивных исследования и полевой дневник."
+    />
+    <title>Погнали в Вожегу! — Карта открытий</title>
+    <link rel="icon" href="assets/compass.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="assets/leaflet.css" />
+    <link rel="stylesheet" href="style.css" />
+    <script defer src="assets/leaflet.js"></script>
+    <script defer src="content.js"></script>
+    <script defer src="scenes.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <a href="#route" class="skip-link">Перейти к остановкам</a>
+    <header class="topbar">
+      <a class="brand" href="#map" aria-label="К началу карты"
+        ><img src="assets/compass.svg" width="40" height="40" alt="" /><span
+          >КАРТА<br />ОТКРЫТИЙ</span
+        ></a
+      ><span class="region"
+        >ВОЛОГОДСКАЯ ОБЛАСТЬ <span>/</span> ВОЖЕГОДСКИЙ ОКРУГ</span
+      >
+      <nav aria-label="Основная навигация">
+        <button class="text-button" data-action="sources">Источники</button
+        ><button
+          class="text-button"
+          data-action="share"
+          aria-label="Открыть QR-код экскурсии"
+        >
+          QR</button
+        ><button class="notebook-button" data-action="notebook">
+          Дневник <span id="notebook-count">0/4</span></button
+        ><button class="show-button" data-action="presentation">
+          Режим показа <span>→</span>
+        </button>
+      </nav>
+    </header>
+    <main class="app-shell">
+      <aside class="sidebar">
+        <div class="eyebrow">
+          <span class="live-dot"></span> МАЛЕНЬКАЯ НАУЧНАЯ ЭКСПЕДИЦИЯ
+        </div>
+        <h1>Погнали<br />в <em>Вожегу!</em></h1>
+        <p class="intro">Природа — большая<br />лаборатория.</p>
+        <p class="description">
+          Четыре открытия о земле, воде и жизни. Выбери место на карте или
+          отправляйся по всему маршруту.
+        </p>
+        <button class="primary" id="start-button" data-action="start">
+          Начать экспедицию <span>→</span>
+        </button>
+        <div class="tour-meta">
+          <span>4 исследования</span><span>В своём темпе</span>
+        </div>
+        <div class="stops-head" id="route">
+          <h2>Твой маршрут</h2>
+          <span id="progress-label">0 ИЗ 4</span>
+        </div>
+        <div class="progress-track" aria-hidden="true">
+          <span id="progress-fill"></span>
+        </div>
+        <div id="stop-list" class="stop-list"></div>
+        <button class="lab-note" data-stop="karst">
+          01 — тематическая лаборатория<br /><span
+            >Название озера уточняется</span
+          >
+        </button>
+        <div class="sidebar-footer">
+          <span>ПОЛЕВОЙ ДНЕВНИК · 2026</span
+          ><button class="text-button" data-action="about">О проекте →</button>
+        </div>
+      </aside>
+      <section class="map-section" aria-label="Карта Вожегодского округа">
+        <div id="map"></div>
+        <div class="map-top">
+          <div class="map-tag">
+            <span class="live-dot"></span> ТРИ ГЕОМЕТКИ И ЛАБОРАТОРИЯ
+          </div>
+          <button
+            class="map-button"
+            data-action="overview"
+            title="Показать все места"
+            aria-label="Показать все места"
+          >
+            ⌖
+          </button>
+        </div>
+        <div class="north" aria-hidden="true">
+          <span>N</span
+          ><svg viewBox="0 0 36 56">
+            <path d="M18 2 29 41 18 34 7 41Z" fill="#244c40" />
+            <path d="m18 2 0 32-11 7Z" fill="#faf9f1" stroke="#244c40" />
+          </svg>
+        </div>
+        <div id="map-status" class="map-status" role="status" hidden>
+          Карта загружается. Исследования доступны в списке слева.
+        </div>
+        <div class="map-caption">
+          <span>60° СЕВЕРНОЙ ШИРОТЫ</span>
+          <h2>Большие открытия<br />начинаются <em>рядом.</em></h2>
+        </div>
+        <button
+          class="region-postcard"
+          data-action="region-gallery"
+          aria-label="Открыть фотографии озёр края"
+        >
+          <img
+            id="region-cover"
+            src="assets/media/lake-vozhe.webp"
+            alt="Озеро Воже"
+            width="180"
+            height="120"
+          /><span>ОЗЁРА ВОЛОГОДЧИНЫ <strong>Посмотреть ближе →</strong></span>
+        </button>
+        <div class="map-bottom">
+          <div class="map-hint">
+            <span class="hint-icon">→</span
+            ><span
+              ><strong>Нажми на метку — откроется история</strong
+              ><small>Номер обозначает остановку экскурсии</small></span
+            >
+          </div>
+          <button class="text-button" data-action="map-help">
+            Что обозначено на карте?
+          </button>
+        </div>
+      </section>
+    </main>
+    <dialog id="chapter-dialog" aria-labelledby="chapter-title">
+      <header class="chapter-header">
+        <span id="chapter-kicker"></span>
+        <div>
+          <button
+            class="icon-button"
+            data-action="toggle-show"
+            title="Режим показа"
+            aria-label="Переключить режим показа"
+          >
+            ▣</button
+          ><button
+            class="close-button"
+            data-close
+            aria-label="Закрыть исследование"
+          >
+            ×
+          </button>
+        </div>
+      </header>
+      <div class="chapter-layout">
+        <div class="chapter-visual" id="chapter-visual"></div>
+        <section class="chapter-copy">
+          <div class="chapter-heading">
+            <span class="subject-chip" id="chapter-subject"></span>
+            <h2 id="chapter-title"></h2>
+            <p id="chapter-place"></p>
+          </div>
+          <nav class="chapter-tabs" aria-label="Этапы исследования">
+            <button data-step="0">01 · Место</button
+            ><button data-step="1">02 · Исследование</button
+            ><button data-step="2">03 · Наблюдение</button>
+          </nav>
+          <div id="chapter-body" class="chapter-body"></div>
+        </section>
+      </div>
+      <footer class="chapter-footer">
+        <button class="text-button" data-action="previous">← Назад</button
+        ><span id="chapter-progress"></span
+        ><button class="primary" data-action="next" id="next-button">
+          К исследованию <span>→</span>
+        </button>
+      </footer>
+      <div class="show-shortcuts" hidden>
+        ← → — этапы · F — полный экран · Esc — закрыть ·
+        <button data-action="toggle-show">Обычный вид</button>
+      </div>
+    </dialog>
+    <dialog id="info-dialog" class="info-dialog" aria-labelledby="info-title">
+      <button
+        class="close-button info-close"
+        data-close
+        aria-label="Закрыть окно"
+      >
+        ×
+      </button>
+      <div id="info-content"></div>
+    </dialog>
+    <dialog
+      id="photo-dialog"
+      class="photo-dialog"
+      aria-label="Фотография крупным планом"
+    >
+      <button
+        class="close-button info-close"
+        data-close
+        aria-label="Закрыть фотографию"
+      >
+        ×
+      </button>
+      <figure>
+        <img
+          id="large-photo"
+          src="assets/media/orchid-macranthos.webp"
+          alt=""
+        />
+        <figcaption id="photo-caption"></figcaption>
+      </figure>
+    </dialog>
+    <div id="toast" class="toast" role="status"></div>
+    <noscript
+      ><p class="noscript">
+        Включи JavaScript для работы экскурсии. Материалы и фотографии находятся
+        в файлах проекта.
+      </p></noscript
+    >
+  </body>
+</html>
