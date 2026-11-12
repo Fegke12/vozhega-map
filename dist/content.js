@@ -1,5 +1,5 @@
 "use strict";
-const SITE_URL = "https://pognali-vozhega.lovablechina16.chatgpt.site";
+const SITE_URL = "https://fegke12.github.io/vozhega-map/";
 const SOURCES = [
   {
     id: "karst",

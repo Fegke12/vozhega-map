@@ -5,7 +5,7 @@
 Проект подходит для самостоятельного знакомства с регионом, школьного урока и выступления с проектором. Откройте место на карте, пройдите исследование и сохраните наблюдения в полевом дневнике.
 
 <p align="center">
-  <a href="https://pognali-vozhega.lovablechina16.chatgpt.site">
+  <a href="https://fegke12.github.io/vozhega-map/">
     <img src="https://img.shields.io/badge/%E2%96%B6%20%D0%9E%D1%82%D0%BA%D1%80%D1%8B%D1%82%D1%8C%20%D1%8D%D0%BA%D1%81%D0%BA%D1%83%D1%80%D1%81%D0%B8%D1%8E-2a1c11?style=for-the-badge" alt="▶ Открыть экскурсию">
   </a>
 </p>
