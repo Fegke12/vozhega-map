@@ -2100,3 +2100,160 @@ input[type="range"] {
     display: initial;
   }
 }
+
+/* Keep controls outside the scrolling research content, including short screens. */
+html {
+  scrollbar-gutter: stable;
+}
+body.modal-open {
+  overflow: hidden;
+}
+#chapter-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  height: min(740px, 92dvh);
+  overflow: hidden;
+}
+.chapter-header,
+.chapter-footer,
+.show-shortcuts {
+  flex-shrink: 0;
+}
+.chapter-layout,
+.presentation .chapter-layout {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.chapter-copy,
+.presentation .chapter-copy {
+  min-width: 0;
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.chapter-visual,
+.presentation .chapter-visual {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 25px 27px;
+}
+.visual-label,
+.visual-caption {
+  position: static;
+  pointer-events: none;
+}
+.visual-label {
+  align-self: start;
+}
+.drawing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  height: 100%;
+  padding: 0;
+}
+.drawing svg,
+.presentation .drawing svg {
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+}
+.visual-stat {
+  margin: 0;
+  padding: 0;
+}
+.visual-caption {
+  align-self: end;
+}
+.chapter-visual:has(.plant-photo) {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+.chapter-visual:has(.plant-photo) .visual-caption {
+  grid-row: 3;
+}
+.close-button,
+.icon-button {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+.info-dialog .info-close {
+  position: sticky;
+  top: 0;
+  float: right;
+  margin: 0 0 8px 12px;
+}
+.info-dialog,
+.chapter-sources,
+.plain-link {
+  overflow-wrap: anywhere;
+}
+.chapter-tabs button,
+.range-ends,
+.notebook-entry label {
+  color: var(--muted);
+}
+.subject-chip {
+  color: #415c45;
+}
+.photo-dialog .info-close {
+  position: sticky;
+  top: 12px;
+  float: right;
+  margin: 12px 12px -52px 0;
+}
+.presentation #chapter-dialog[open] {
+  height: calc(100dvh - 24px);
+}
+#chapter-dialog:fullscreen[open] {
+  height: 100dvh;
+  max-height: 100dvh;
+}
+@media (min-width: 651px) and (max-height: 650px) {
+  .visual-stat {
+    display: none;
+  }
+}
+@media (max-width: 650px) {
+  #chapter-dialog[open] {
+    height: 94dvh;
+  }
+  .presentation #chapter-dialog[open] {
+    height: 97dvh;
+  }
+  .chapter-layout,
+  .presentation .chapter-layout {
+    display: block;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .chapter-visual,
+  .presentation .chapter-visual {
+    height: 260px;
+    min-height: 260px;
+    padding: 17px 21px;
+    gap: 10px;
+  }
+  .chapter-copy,
+  .presentation .chapter-copy {
+    overflow: visible;
+    max-height: none;
+  }
+  .visual-caption,
+  .visual-caption small {
+    font-size: 9px;
+  }
+  .chapter-footer {
+    position: static;
+  }
+  .notebook-entry textarea {
+    font-size: 16px;
+  }
+}

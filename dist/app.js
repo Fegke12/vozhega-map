@@ -12,7 +12,7 @@ let currentStep = 0;
 let showMode = false;
 let map;
 let toastTimer;
-let lastLauncher;
+const dialogLaunchers = new WeakMap();
 let storageWarning = false;
 const markers = new Map();
 const LAKES = [
@@ -41,8 +41,10 @@ const LAKES = [
   },
 ];
 function toast(message) {
-  $("#toast").textContent = message;
-  $("#toast").classList.add("show");
+  const element = $("#toast");
+  (topDialog() || document.body).append(element);
+  element.textContent = message;
+  element.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => $("#toast").classList.remove("show"), 3500);
 }
@@ -187,6 +189,7 @@ function setupMap() {
         className: "map-label",
       });
     marker.on("click", () => openChapter(stop.id, marker.getElement()));
+    marker.getElement().setAttribute("aria-label", `Открыть ${stop.place}`);
     markers.set(stop.id, marker);
   });
   L.circleMarker([60.472, 40.214], {
@@ -207,19 +210,28 @@ function setupMap() {
     mapOverviewOptions(),
   );
 }
-function showDialog(dialog) {
-  if (!dialog.open) dialog.showModal();
+function topDialog() {
+  return [photoDialog, infoDialog, chapterDialog].find((dialog) => dialog.open);
+}
+function syncDialogState() {
+  document.body.classList.toggle("modal-open", Boolean(topDialog()));
+}
+function showDialog(dialog, launcher = document.activeElement) {
+  if (!dialog.open) {
+    dialogLaunchers.set(dialog, launcher);
+    dialog.showModal();
+  }
+  syncDialogState();
   dialog.scrollTop = 0;
 }
 function openChapter(id, launcher) {
   const index = STOPS.findIndex((stop) => stop.id === id);
   if (index < 0) return;
-  if (launcher) lastLauncher = launcher;
   if (infoDialog.open) infoDialog.close();
   currentIndex = index;
   currentStep = 0;
   renderChapter();
-  showDialog(chapterDialog);
+  showDialog(chapterDialog, launcher);
   const stop = STOPS[index];
   if (map && stop.coords)
     map.flyTo(stop.coords, 11, { duration: reduceMotion ? 0 : 1.1 });
@@ -249,6 +261,7 @@ function renderChapter() {
   $("#next-button").innerHTML =
     `${currentStep === 0 ? "К исследованию" : currentStep === 1 ? "Моё наблюдение" : currentIndex === 3 ? "Развернуть дневник" : "Следующее место"} <span>→</span>`;
   $(".chapter-copy").scrollTop = 0;
+  $(".chapter-layout").scrollTop = 0;
   chapterDialog.scrollTop = 0;
   updateVisual();
 }
@@ -283,12 +296,17 @@ function experimentMarkup(stop) {
 }
 function observationMarkup(stop) {
   const answered = session[stop.id].answer;
-  return `<p class="chapter-lead">Что ты заметил?</p><p class="observation-question">${stop.task}</p><div class="answers">${stop.answers.map((answer, index) => `<button data-answer="${index}" class="${answered === index ? (index === stop.correct ? "correct" : "incorrect") : ""}"><span>${String.fromCharCode(65 + index)}</span>${answer}</button>`).join("")}</div><div id="answer-feedback" role="status" class="result-card ${answered === null ? "" : "feedback-visible"}" ${answered === null ? "hidden" : ""}>${answered === stop.correct ? "<small>НАБЛЮДЕНИЕ ЗАПИСАНО</small>" : "<small>ПОПРОБУЙ ЕЩЁ РАЗ</small>"}<p>${answered === stop.correct ? stop.explanation : "Вернись к опыту и сравни наблюдение с предложенными ответами."}</p></div><p class="body-copy small-copy">После верного наблюдения в дневнике появится вывод. Остановки можно исследовать в любом порядке.</p>`;
+  return `<p class="chapter-lead">Что ты заметил?</p><p class="observation-question">${stop.task}</p><div class="answers">${stop.answers.map((answer, index) => `<button data-answer="${index}" aria-pressed="${answered === index}" class="${answered === index ? (index === stop.correct ? "correct" : "incorrect") : ""}"><span>${String.fromCharCode(65 + index)}</span>${answer}</button>`).join("")}</div><div id="answer-feedback" role="status" class="result-card ${answered === null ? "" : "feedback-visible"}" ${answered === null ? "hidden" : ""}>${answered === stop.correct ? "<small>НАБЛЮДЕНИЕ ЗАПИСАНО</small>" : "<small>ПОПРОБУЙ ЕЩЁ РАЗ</small>"}<p>${answered === stop.correct ? stop.explanation : "Вернись к опыту и сравни наблюдение с предложенными ответами."}</p></div><p class="body-copy small-copy">После верного наблюдения в дневнике появится вывод. Остановки можно исследовать в любом порядке.</p>`;
 }
 function updateVisual() {
   const stop = STOPS[currentIndex];
   const model = session[stop.id];
   if (stop.id === "karst") {
+    document.querySelectorAll("[data-karst]").forEach((button) => {
+      const selected = Number(button.dataset.karst) === model.karstStep;
+      button.classList.toggle("selected", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
     $("#cavity").setAttribute("opacity", model.karstStep >= 1 ? "1" : "0");
     $("#karst-lake").setAttribute("opacity", model.karstStep === 2 ? "1" : "0");
     const texts = [
@@ -312,12 +330,10 @@ function updateVisual() {
       model.evaporated ? "translate(-100,175) scale(1.6,.2)" : "",
     );
     $(".bubbles").style.opacity = model.evaporated ? "0" : "1";
-    const water = $(".drawing svg [clip-path] > path");
-    const y = model.evaporated ? 205 : 92;
-    water.setAttribute(
-      "d",
-      `M106 ${y}Q130 ${y - 10} 158 ${y + 1}T215 ${y}V229H106Z`,
-    );
+    $("#sample-water").setAttribute("opacity", model.evaporated ? "0" : "1");
+    const evaporateButton = $('[data-action="evaporate"]');
+    if (evaporateButton)
+      evaporateButton.textContent = `${model.evaporated ? "Восстановить образец" : "Испарить воду в модели"} →`;
     $("#visual-stat").innerHTML =
       `<span>${model.evaporated ? "ОСТАТОК ПОСЛЕ ИСПАРЕНИЯ" : "УЧЕБНАЯ КОНЦЕНТРАЦИЯ"}</span><strong>${model.concentration.toFixed(1).replace(".", ",")} ${model.evaporated ? "г" : "г/л"}</strong>`;
     if ($("#concentration-value"))
@@ -332,6 +348,11 @@ function updateVisual() {
         : "После полного испарения литра такого модельного образца останется столько нелетучих солей.";
   }
   if (stop.id === "physics") {
+    document.querySelectorAll("[data-pressure]").forEach((button) => {
+      const selected = (button.dataset.pressure === "absolute") === model.absolute;
+      button.classList.toggle("selected", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
     const pressure = model.depth * 9.81 + (model.absolute ? 101.3 : 0);
     $("#dive-marker").setAttribute(
       "transform",
@@ -405,13 +426,14 @@ function setShowMode(value) {
   showMode = value;
   document.body.classList.toggle("presentation", value);
   $(".show-shortcuts").hidden = !value;
-  $('[data-action="toggle-show"]').setAttribute("aria-pressed", String(value));
+  document.querySelectorAll('[data-action="toggle-show"]').forEach((button) =>
+    button.setAttribute("aria-pressed", String(value)),
+  );
 }
 function openInfo(html, launcher) {
-  if (launcher) lastLauncher = launcher;
   if (chapterDialog.open) chapterDialog.close();
   $("#info-content").innerHTML = html;
-  showDialog(infoDialog);
+  showDialog(infoDialog, launcher);
 }
 function openNotebook(launcher) {
   const count = completedCount();
@@ -431,7 +453,7 @@ function openSources(launcher) {
 }
 function openShare(launcher) {
   openInfo(
-    `<div class="eyebrow">ЭКСПЕДИЦИЯ НА ТВОЁМ ТЕЛЕФОНЕ</div><h2 id="info-title">Забери карту с собой.</h2><img class="qr-image" src="assets/vozhega-qr.svg" alt="QR-код ссылки на экскурсию" width="260" height="260"><p class="body-copy">Наведи камеру телефона на код, чтобы открыть экскурсию. Доступ к опубликованной странице определяется настройками сайта и может потребовать входа в ChatGPT.</p><a class="primary download-link" href="assets/vozhega-qr.png" download="Pognali_v_Vozhegu_QR.png">Скачать QR-код <span>↓</span></a><a class="plain-link" href="${SITE_URL}" target="_blank" rel="noopener">Открыть ссылку на экскурсию →</a>`,
+    `<div class="eyebrow">ЭКСПЕДИЦИЯ НА ТВОЁМ ТЕЛЕФОНЕ</div><h2 id="info-title">Забери карту с собой.</h2><img class="qr-image" src="assets/vozhega-qr.svg" alt="QR-код ссылки на экскурсию" width="260" height="260"><p class="body-copy">Наведи камеру телефона на код, чтобы открыть экскурсию. Экскурсия открывается на GitHub Pages без регистрации. Дневник сохраняется в браузере твоего устройства.</p><a class="primary download-link" href="assets/vozhega-qr.png" download="Pognali_v_Vozhegu_QR.png">Скачать QR-код <span>↓</span></a><a class="plain-link" href="${SITE_URL}" target="_blank" rel="noopener">Открыть ссылку на экскурсию →</a>`,
     launcher,
   );
 }
@@ -443,8 +465,6 @@ function openGallery(launcher) {
 }
 function closeDialog(dialog) {
   dialog.close();
-  if (lastLauncher && document.contains(lastLauncher))
-    lastLauncher.focus({ preventScroll: true });
 }
 const actions = {
   start: (button) => {
@@ -476,11 +496,11 @@ const actions = {
   next: nextStage,
   "advance-karst": () => {
     session.karst.karstStep = (session.karst.karstStep + 1) % 3;
-    renderChapter();
+    updateVisual();
   },
   evaporate: () => {
     session.chemistry.evaporated = !session.chemistry.evaporated;
-    renderChapter();
+    updateVisual();
   },
   "back-map": () => {
     infoDialog.close();
@@ -490,13 +510,13 @@ const actions = {
       block: "center",
     });
   },
-  "enlarge-plant": () => {
+  "enlarge-plant": (button) => {
     const plant = PLANTS[session.biology.plant];
     $("#large-photo").src = plant.image;
     $("#large-photo").alt = plant.name;
     $("#photo-caption").textContent =
       `${plant.name}. ${plant.caption} Фото ${plant.author} · ${plant.license}`;
-    showDialog(photoDialog);
+    showDialog(photoDialog, button);
   },
 };
 document.addEventListener("click", (event) => {
@@ -517,7 +537,7 @@ document.addEventListener("click", (event) => {
   }
   if (button.dataset.karst !== undefined) {
     session.karst.karstStep = Number(button.dataset.karst);
-    renderChapter();
+    updateVisual();
     return;
   }
   if (button.dataset.plant !== undefined) {
@@ -526,7 +546,7 @@ document.addEventListener("click", (event) => {
   }
   if (button.dataset.pressure) {
     session.physics.absolute = button.dataset.pressure === "absolute";
-    renderChapter();
+    updateVisual();
     return;
   }
   if (button.dataset.answer !== undefined) {
@@ -534,6 +554,7 @@ document.addEventListener("click", (event) => {
     session[STOPS[currentIndex].id].answer = answer;
     if (answer === STOPS[currentIndex].correct) markComplete();
     $("#chapter-body").innerHTML = observationMarkup(STOPS[currentIndex]);
+    $(`[data-answer="${answer}"]`).focus({ preventScroll: true });
     return;
   }
   const action = actions[button.dataset.action];
@@ -580,7 +601,7 @@ document.addEventListener("keydown", (event) => {
     event.preventDefault();
     previousStage();
   }
-  if (event.key.toLowerCase() === "f") {
+  if (event.code === "KeyF" || event.key.toLowerCase() === "f") {
     event.preventDefault();
     const request = document.fullscreenElement
       ? document.exitFullscreen()
@@ -591,7 +612,7 @@ document.addEventListener("keydown", (event) => {
   }
 });
 chapterDialog.addEventListener("close", () => {
-  setShowMode(false);
+  if (!chapterDialog.open) setShowMode(false);
   if (document.fullscreenElement === chapterDialog)
     document.exitFullscreen().catch(() => {});
 });
@@ -608,22 +629,72 @@ chapterDialog.addEventListener("close", () => {
       closeDialog(dialog);
   }),
 );
+[chapterDialog, infoDialog, photoDialog].forEach((dialog) =>
+  dialog.addEventListener("close", () => {
+    syncDialogState();
+    const parent = topDialog();
+    const active = document.activeElement;
+    if (
+      active !== document.body &&
+      active !== dialog &&
+      active?.getClientRects().length &&
+      (!parent || parent.contains(active))
+    ) return;
+    const launcher = dialogLaunchers.get(dialog);
+    if (
+      launcher?.isConnected &&
+      launcher.getClientRects().length &&
+      (!parent || parent.contains(launcher))
+    ) {
+      launcher.focus({ preventScroll: true });
+    } else if (parent) {
+      parent.querySelector("button")?.focus({ preventScroll: true });
+    } else {
+      $("#start-button").focus({ preventScroll: true });
+    }
+  }),
+);
 $(".brand").addEventListener("click", (event) => {
   event.preventDefault();
   overview();
   window.scrollTo({ top: 0, behavior: reduceMotion ? "instant" : "smooth" });
 });
+function syncNotebook() {
+  if (!infoDialog.open || !infoDialog.querySelector("[data-note]")) return;
+  const count = completedCount();
+  infoDialog.querySelector(".eyebrow").textContent =
+    `ЛИЧНЫЙ ПОЛЕВОЙ ДНЕВНИК · ${count}/4`;
+  $("#info-title").textContent = count === 4
+    ? "Четыре открытия рядом."
+    : "Каждое место — открытие.";
+  STOPS.forEach((stop) => {
+    const input = $(`#note-${stop.id}`);
+    if (input !== document.activeElement) input.value = progress[stop.id].notes;
+    const entry = input.closest(".notebook-entry");
+    entry.classList.toggle("done", progress[stop.id].done);
+    entry.querySelector(".stop-number").textContent =
+      progress[stop.id].done ? "✓" : stop.number;
+    entry.querySelector("p").textContent = progress[stop.id].done
+      ? stop.takeaway
+      : "Эта страница ждёт твоего наблюдения.";
+  });
+}
 window.addEventListener("storage", (event) => {
-  if (!event.key?.startsWith("vozhega-v2-")) return;
-  const id = event.key.slice("vozhega-v2-".length);
-  if (!progress[id]) return;
-  const changed = readJson(event.key, {});
-  progress[id] = {
-    done: changed.done === true,
-    notes:
-      typeof changed.notes === "string" ? changed.notes.slice(0, 1000) : "",
-  };
+  const prefix = "vozhega-v2-";
+  if (event.key !== null && !event.key?.startsWith(prefix)) return;
+  const ids = event.key === null
+    ? STOPS.map((stop) => stop.id)
+    : [event.key.slice(prefix.length)];
+  ids.forEach((id) => {
+    if (!progress[id]) return;
+    const changed = readJson(`${prefix}${id}`, {});
+    progress[id] = {
+      done: changed.done === true,
+      notes: typeof changed.notes === "string" ? changed.notes.slice(0, 1000) : "",
+    };
+  });
   renderRoute();
+  syncNotebook();
 });
 loadProgress();
 renderRoute();
