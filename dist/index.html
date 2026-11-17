@@ -12,9 +12,11 @@
     <link rel="icon" href="assets/compass.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="assets/leaflet.css" />
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="biology.css" />
     <script defer src="assets/leaflet.js"></script>
     <script defer src="content.js"></script>
     <script defer src="scenes.js"></script>
+    <script defer src="biology.js"></script>
     <script defer src="app.js"></script>
   </head>
   <body>
@@ -27,7 +29,7 @@
       ><span class="region"
         >ВОЛОГОДСКАЯ ОБЛАСТЬ <span>/</span> ВОЖЕГОДСКИЙ ОКРУГ</span
       >
-      <nav aria-label="Основная навигация">
+      <nav id="general-nav" aria-label="Основная навигация">
         <button class="text-button" data-action="sources">Источники</button
         ><button
           class="text-button"
@@ -41,9 +43,13 @@
           Режим показа <span>→</span>
         </button>
       </nav>
+      <nav id="biology-nav" aria-label="Карта растений" hidden>
+        <button class="text-button" data-action="biology-exit">← Все предметы</button>
+        <button class="redbook-nav-button" data-action="redbook">Красная книга <span>→</span></button>
+      </nav>
     </header>
     <main class="app-shell">
-      <aside class="sidebar">
+      <aside class="sidebar" id="general-sidebar">
         <div class="eyebrow">
           <span class="live-dot"></span> МАЛЕНЬКАЯ НАУЧНАЯ ЭКСПЕДИЦИЯ
         </div>
@@ -77,11 +83,24 @@
           ><button class="text-button" data-action="about">О проекте →</button>
         </div>
       </aside>
+      <aside class="biology-sidebar" id="biology-sidebar" hidden>
+        <div class="bio-eyebrow"><span></span> БИОЛОГИЯ · ВОЖЕГОДСКИЙ ОКРУГ</div>
+        <h1>Красная<br /><em>книга.</em></h1>
+        <p class="bio-intro">Редкая красота<br />северного леса.</p>
+        <p class="bio-description">Нажми на цветок на карте — и откроется его история.</p>
+        <button class="bio-book-invite" data-action="redbook" aria-label="Открыть Красную книгу">
+          <span class="bio-mini-book" aria-hidden="true"><span>КРАСНАЯ<br />КНИГА</span><svg viewBox="0 0 60 70"><path d="M30 64V30M30 48C4 48 9 30 30 40M30 54C54 53 52 38 30 44M30 33C6 29 15 10 30 21C45 5 55 25 30 33ZM30 24C19 5 35 0 38 14"/></svg></span>
+          <span><strong>Открой<br />Красную книгу</strong><small>Листай и знакомься с растениями</small><span class="bio-invite-arrow">→</span></span>
+        </button>
+        <div class="bio-list-title" id="bio-plants">На страницах книги <span>03</span></div>
+        <div id="bio-plant-list" class="bio-plant-list"></div>
+        <p class="bio-map-note">На карте — места находок редких растений.</p>
+      </aside>
       <section class="map-section" aria-label="Карта Вожегодского округа">
         <div id="map"></div>
         <div class="map-top">
           <div class="map-tag">
-            <span class="live-dot"></span> ТРИ ГЕОМЕТКИ И ЛАБОРАТОРИЯ
+            <span class="live-dot"></span> <span id="map-tag-text">ТРИ ГЕОМЕТКИ И ЛАБОРАТОРИЯ</span>
           </div>
           <button
             class="map-button"
@@ -103,8 +122,8 @@
           Карта пока недоступна. Все исследования можно открыть из списка остановок.
         </div>
         <div class="map-caption">
-          <span>60° СЕВЕРНОЙ ШИРОТЫ</span>
-          <h2>Большие открытия<br />начинаются <em>рядом.</em></h2>
+          <span id="map-caption-kicker">60° СЕВЕРНОЙ ШИРОТЫ</span>
+          <h2 id="map-caption-title">Большие открытия<br />начинаются <em>рядом.</em></h2>
         </div>
         <button
           class="region-postcard"
@@ -123,8 +142,8 @@
           <div class="map-hint">
             <span class="hint-icon">→</span
             ><span
-              ><strong>Нажми на метку — откроется история</strong
-              ><small>Номер обозначает остановку экскурсии</small></span
+              ><strong id="map-hint-title">Нажми на метку — откроется история</strong
+              ><small id="map-hint-note">Номер обозначает остановку экскурсии</small></span
             >
           </div>
           <button class="text-button" data-action="map-help">
@@ -133,6 +152,39 @@
         </div>
       </section>
     </main>
+    <dialog id="redbook-dialog" class="redbook-dialog" aria-label="Красная книга растений Вожегодского округа">
+      <header class="redbook-toolbar">
+        <span><i></i> КРАСНАЯ КНИГА <small>ВОЖЕГОДСКИЙ ОКРУГ</small></span>
+        <button class="redbook-close" data-close aria-label="Закрыть Красную книгу">×</button>
+      </header>
+      <div class="book-stage">
+        <div class="book-volume" id="book-volume">
+          <div class="book-spread" id="book-spread" inert aria-hidden="true">
+            <div class="book-image-page"><img id="book-photo" src="assets/media/orchid-calceolus.webp" alt="" /></div>
+            <section class="book-copy">
+              <div class="book-page-kicker">РЕДКИЕ РАСТЕНИЯ СЕВЕРА <span id="book-page-number">01</span></div>
+              <div class="book-text"><h2 id="book-plant-title" tabindex="-1"></h2><div class="book-heading-rule"></div><p id="book-description"></p></div>
+              <div class="book-place"><span>ГДЕ ВСТРЕЧАЕТСЯ</span><strong id="book-place-name"></strong><button data-action="book-map">Показать на карте <span>→</span></button></div>
+              <span class="book-bottom-number" id="book-folio">01</span>
+            </section>
+          </div>
+          <button class="book-cover" id="book-cover" data-action="book-open" aria-label="Открыть книгу">
+            <span class="book-cover-border"></span>
+            <span class="book-cover-region">ВОЖЕГОДСКИЙ ОКРУГ</span>
+            <span class="book-cover-title">Красная<br />книга</span>
+            <svg class="book-cover-flower" viewBox="0 0 160 190" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.2"><path d="M80 180C76 153 84 117 78 80M79 132C20 123 31 91 76 119M78 155C132 145 130 112 80 139M78 84C33 89 27 57 58 54C31 23 69 16 79 45C93 4 131 22 106 53C145 47 145 89 102 84M63 67C66 112 101 115 107 65C92 54 80 55 63 67ZM48 29C42 15 51 9 56 18M113 24C121 10 130 15 125 27"/><ellipse cx="85" cy="75" rx="12" ry="8"/><path d="M43 172C59 176 96 176 117 171"/></g></svg>
+            <span class="book-cover-caption">РЕДКИЕ РАСТЕНИЯ<br />РОДНОГО КРАЯ</span>
+            <span class="book-cover-open">Нажми, чтобы открыть <b>→</b></span>
+          </button>
+          <div class="book-turn-sheet" aria-hidden="true"></div>
+        </div>
+      </div>
+      <footer class="redbook-footer">
+        <button id="book-prev" data-action="book-prev" aria-label="Предыдущее растение">← <span>Назад</span></button>
+        <div id="book-dots" class="book-dots" aria-label="Страницы книги"></div>
+        <button id="book-next" data-action="book-next" aria-label="Следующее растение"><span>Дальше</span> →</button>
+      </footer>
+    </dialog>
     <dialog id="chapter-dialog" aria-labelledby="chapter-title">
       <header class="chapter-header">
         <span id="chapter-kicker"></span>

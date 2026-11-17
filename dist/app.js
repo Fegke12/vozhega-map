@@ -11,6 +11,9 @@ let currentIndex = 0;
 let currentStep = 0;
 let showMode = false;
 let map;
+let biologyMode = false;
+let plantLayer;
+const plantMarkers = new Map();
 let toastTimer;
 const dialogLaunchers = new WeakMap();
 let storageWarning = false;
@@ -126,6 +129,9 @@ function sourceLink(id) {
 }
 function mapOverviewOptions() {
   const mobile = matchMedia("(max-width: 650px)").matches;
+  if (biologyMode && mobile) return {
+    paddingTopLeft: [30, 70], paddingBottomRight: [30, 150], maxZoom: 10,
+  };
   return {
     paddingTopLeft: mobile ? [35, 80] : [90, 90],
     paddingBottomRight: mobile ? [140, 160] : [210, 270],
@@ -135,9 +141,97 @@ function mapOverviewOptions() {
 function overview() {
   if (map)
     map.flyToBounds(
-      STOPS.filter((stop) => stop.coords).map((stop) => stop.coords),
+      biologyMode ? PLANT_PLACES.map((place) => place.coords) : STOPS.filter((stop) => stop.coords).map((stop) => stop.coords),
       { ...mapOverviewOptions(), duration: reduceMotion ? 0 : 1 },
     );
+}
+function enterBiology() {
+  if (chapterDialog.open) chapterDialog.close();
+  if (infoDialog.open) infoDialog.close();
+  currentIndex = STOPS.findIndex((stop) => stop.id === "biology");
+  currentStep = 0;
+  if (biologyMode) return;
+  biologyMode = true;
+  if (typeof history !== "undefined") history.replaceState(null, "", "#biology");
+  document.body.classList.add("biology-mode");
+  $("#general-sidebar").hidden = true;
+  $("#biology-sidebar").hidden = false;
+  $("#general-nav").hidden = true;
+  $("#biology-nav").hidden = false;
+  $(".skip-link").href = "#bio-plants";
+  $("#map-tag-text").textContent = "МЕСТА НАХОДОК РЕДКИХ РАСТЕНИЙ";
+  $("#map-caption-kicker").textContent = "КРАСНАЯ КНИГА ВОЛОГОДЧИНЫ";
+  $("#map-caption-title").innerHTML = "Редкая красота.<br>Совсем <em>рядом.</em>";
+  $("#map-hint-title").textContent = "Нажми на цветок — откроется книга";
+  $("#map-hint-note").textContent = "Растения Вожегодского округа";
+  if (map) {
+    markers.forEach((marker) => map.removeLayer(marker));
+    if (!plantLayer) {
+      plantLayer = L.layerGroup();
+      PLANT_PLACES.forEach((place) => {
+        const icon = L.divIcon({
+          className: "bio-pin",
+          html: `<span class="bio-pin-face"><svg viewBox="0 0 40 40" aria-hidden="true"><g fill="currentColor"><ellipse cx="20" cy="12" rx="5" ry="9"/><ellipse cx="20" cy="12" rx="5" ry="9" transform="rotate(72 20 20)"/><ellipse cx="20" cy="12" rx="5" ry="9" transform="rotate(144 20 20)"/><ellipse cx="20" cy="12" rx="5" ry="9" transform="rotate(216 20 20)"/><ellipse cx="20" cy="12" rx="5" ry="9" transform="rotate(288 20 20)"/></g><circle cx="20" cy="20" r="4" fill="#eac880"/></svg></span>${place.plantIds.length > 1 ? '<span class="bio-pin-count">3</span>' : ""}`,
+          iconSize: [48, 54], iconAnchor: [24, 51],
+        });
+        const marker = L.marker(place.coords, { icon, title: place.name, keyboard: true })
+          .bindTooltip(place.name, { permanent: true, direction: "right", offset: [21, -25], className: "map-label bio-map-label" });
+        marker.on("click", () => RedBook.open(place.plantIds[0], place.id, marker.getElement()));
+        marker.addTo(plantLayer);
+        plantMarkers.set(place.id, marker);
+      });
+    }
+    plantLayer.addTo(map);
+    plantMarkers.forEach((marker, id) => {
+      const place = PLANT_PLACES.find((item) => item.id === id);
+      marker.getElement().setAttribute("aria-label", `Растения: ${place.name}. Открыть Красную книгу`);
+      marker.getElement().onkeydown = (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        event.stopPropagation();
+        RedBook.open(place.plantIds[0], place.id, marker.getElement());
+      };
+    });
+    map.invalidateSize({ animate: false });
+    overview();
+  }
+  window.scrollTo({ top: 0, behavior: "instant" });
+  $('#biology-sidebar [data-action="redbook"]').focus({ preventScroll: true });
+}
+function exitBiology(recenter = true) {
+  if (!biologyMode) return;
+  if (RedBook.dialog.open) RedBook.dialog.close();
+  biologyMode = false;
+  if (typeof history !== "undefined") history.replaceState(null, "", location.pathname + location.search);
+  document.body.classList.remove("biology-mode");
+  $("#general-sidebar").hidden = false;
+  $("#biology-sidebar").hidden = true;
+  $("#general-nav").hidden = false;
+  $("#biology-nav").hidden = true;
+  $(".skip-link").href = "#route";
+  $("#map-tag-text").textContent = "ТРИ ГЕОМЕТКИ И ЛАБОРАТОРИЯ";
+  $("#map-caption-kicker").textContent = "60° СЕВЕРНОЙ ШИРОТЫ";
+  $("#map-caption-title").innerHTML = "Большие открытия<br>начинаются <em>рядом.</em>";
+  $("#map-hint-title").textContent = "Нажми на метку — откроется история";
+  $("#map-hint-note").textContent = "Номер обозначает остановку экскурсии";
+  if (map) {
+    if (plantLayer) map.removeLayer(plantLayer);
+    markers.forEach((marker) => marker.addTo(map));
+    map.invalidateSize({ animate: false });
+    if (recenter) overview();
+  }
+  $("#start-button").focus({ preventScroll: true });
+}
+function showPlantPlace(id) {
+  const place = PLANT_PLACES.find((item) => item.id === id);
+  if (!place) return;
+  enterBiology();
+  if (map) {
+    map.flyTo(place.coords, 11, { duration: reduceMotion ? 0 : 1 });
+    plantMarkers.forEach((marker, markerId) => marker.getElement()?.classList.toggle("bio-pin-selected", markerId === id));
+  }
+  $("#map").scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth", block: "center" });
+  plantMarkers.get(id)?.getElement()?.focus({ preventScroll: true });
 }
 function makeIcon(stop) {
   return L.divIcon({
@@ -211,7 +305,7 @@ function setupMap() {
   );
 }
 function topDialog() {
-  return [photoDialog, infoDialog, chapterDialog].find((dialog) => dialog.open);
+  return [photoDialog, infoDialog, RedBook.dialog, chapterDialog].find((dialog) => dialog.open);
 }
 function syncDialogState() {
   document.body.classList.toggle("modal-open", Boolean(topDialog()));
@@ -227,6 +321,11 @@ function showDialog(dialog, launcher = document.activeElement) {
 function openChapter(id, launcher) {
   const index = STOPS.findIndex((stop) => stop.id === id);
   if (index < 0) return;
+  if (id === "biology") {
+    enterBiology();
+    return;
+  }
+  if (biologyMode) exitBiology(false);
   if (infoDialog.open) infoDialog.close();
   currentIndex = index;
   currentStep = 0;
@@ -238,6 +337,10 @@ function openChapter(id, launcher) {
 }
 function renderChapter() {
   const stop = STOPS[currentIndex];
+  if (stop.id === "biology") {
+    enterBiology();
+    return;
+  }
   $("#chapter-kicker").textContent = stop.kicker;
   $("#chapter-subject").textContent = stop.subject;
   $("#chapter-subject").style.setProperty("--subject", stop.color);
@@ -269,10 +372,6 @@ function placeMarkup(stop) {
   return `<p class="chapter-lead">${stop.lead}</p><p class="body-copy">${stop.body}</p><div class="fact-grid">${stop.facts.map(([label, value]) => `<div><small>${label}</small><strong>${value}</strong></div>`).join("")}</div><div class="location-note"><span>⌖ ${stop.location}</span><p>${stop.locationNote}</p></div><div class="chapter-sources">${stop.sources.map(sourceLink).join("")}</div>`;
 }
 function visualMarkup(stop) {
-  if (stop.id === "biology") {
-    const plant = PLANTS[session.biology.plant];
-    return `<div class="visual-label">ПОЛЕВОЙ АТЛАС · ФОТОГРАФИЯ ВИДА</div><button class="plant-photo" data-action="enlarge-plant" aria-label="Увеличить фотографию орхидеи"><img id="plant-photo" src="${plant.image}" alt="${plant.name}" width="1067" height="1600"><span>Рассмотреть цветок ⊕</span></button><div class="visual-caption"><span id="plant-caption">${plant.caption}</span><small id="plant-credit">Фото ${plant.author} · ${plant.license}</small></div>`;
-  }
   const drawing = {
     karst: karstSvg,
     chemistry: chemistrySvg,
@@ -287,10 +386,6 @@ function experimentMarkup(stop) {
   }
   if (stop.id === "chemistry") {
     return `<p class="chapter-lead">Измени состав.<br>Сравни результат.</p><label class="range-label" for="concentration">Солей в модельном образце <output id="concentration-value">${model.concentration.toFixed(1).replace(".", ",")} г/л</output></label><input id="concentration" type="range" min="0" max="35" step="0.5" value="${model.concentration}"><div class="range-ends"><span>0 г/л</span><span>35 г/л</span></div><div class="result-card"><small>В ОДНОМ ЛИТРЕ ОБРАЗЦА</small><strong id="sample-mass"></strong><p id="sample-text"></p></div><button class="secondary" data-action="evaporate">${model.evaporated ? "Восстановить образец" : "Испарить воду в модели"} →</button><p class="body-copy small-copy">В идеализированном опыте вода испаряется, растворённые нелетучие соли остаются. Числа выбираешь ты — это учебная модель.</p><details class="evidence-note"><summary>А что известно о самом озере?</summary><p>Солёность этого конкретного водоёма пока требует подтверждения. В отчёте ВНИРО описано озеро Погорелово с низкой минерализацией. Его тождество Погореловскому в реестре требует сверки.</p>${sourceLink("water")}</details>`;
-  }
-  if (stop.id === "biology") {
-    const plant = PLANTS[model.plant];
-    return `<p class="chapter-lead">Три страницы<br>лесного атласа.</p><div class="plant-tabs" aria-label="Выбрать вид орхидеи">${PLANTS.map((item, index) => `<button data-plant="${index}" aria-pressed="${model.plant === index}" class="${model.plant === index ? "selected" : ""}">${index + 1}<span>${item.name}</span></button>`).join("")}</div><h3 id="plant-name">${plant.name}</h3><p class="latin" id="plant-latin">${plant.latin}</p><div class="result-card"><small id="plant-feature">${plant.feature}</small><p id="plant-description">${plant.text}</p></div><p class="body-copy small-copy">Фотографии показывают виды растений. Их съёмка внутри урочища не подтверждена. Нажми на снимок для увеличения.</p>`;
   }
   return `<p class="chapter-lead">Опусти зонд.<br>Посчитай давление.</p><label class="range-label" for="depth">Глубина <output id="depth-value"></output></label><input id="depth" type="range" min="0" max="13.8" step="0.1" value="${model.depth}"><div class="range-ends"><span>Поверхность</span><span>13,8 м</span></div><div class="pressure-tabs"><button data-pressure="water" class="${!model.absolute ? "selected" : ""}" aria-pressed="${!model.absolute}">Столб воды</button><button data-pressure="absolute" class="${model.absolute ? "selected" : ""}" aria-pressed="${model.absolute}">Полное давление</button></div><div class="result-card pressure-result"><small id="pressure-label"></small><strong id="pressure-value"></strong><p id="pressure-formula"></p></div><p class="body-copy small-copy">В модели ρ = 1000 кг/м³, g = 9,81 м/с². Для полного давления принято p₀ = 101,3 кПа. Температура и плотность воды условно постоянны.</p>`;
 }
@@ -376,23 +471,6 @@ function updateVisual() {
         : "p = ρgh. Каждые 5 метров добавляют около 49 кПа.";
   }
 }
-function changePlant(index) {
-  session.biology.plant = index;
-  const plant = PLANTS[index];
-  $("#plant-photo").src = plant.image;
-  $("#plant-photo").alt = plant.name;
-  $("#plant-caption").textContent = plant.caption;
-  $("#plant-credit").textContent = `Фото ${plant.author} · ${plant.license}`;
-  $("#plant-name").textContent = plant.name;
-  $("#plant-latin").textContent = plant.latin;
-  $("#plant-feature").textContent = plant.feature;
-  $("#plant-description").textContent = plant.text;
-  document.querySelectorAll("[data-plant]").forEach((button) => {
-    const selected = Number(button.dataset.plant) === index;
-    button.classList.toggle("selected", selected);
-    button.setAttribute("aria-pressed", String(selected));
-  });
-}
 function nextStage() {
   if (currentStep < 2) currentStep++;
   else if (currentIndex < 3) {
@@ -401,6 +479,10 @@ function nextStage() {
     flyToCurrent();
   } else {
     openNotebook();
+    return;
+  }
+  if (STOPS[currentIndex].id === "biology") {
+    enterBiology();
     return;
   }
   renderChapter();
@@ -413,6 +495,10 @@ function previousStage() {
     flyToCurrent();
   } else {
     chapterDialog.close();
+    return;
+  }
+  if (STOPS[currentIndex].id === "biology") {
+    enterBiology();
     return;
   }
   renderChapter();
@@ -489,8 +575,13 @@ const actions = {
   presentation: (button) => {
     const stop = STOPS.find((item) => !progress[item.id].done) || STOPS[0];
     openChapter(stop.id, button);
+    if (stop.id === "biology") {
+      RedBook.open("calceolus", undefined, button);
+      return;
+    }
     setShowMode(true);
   },
+  "biology-exit": () => exitBiology(),
   "toggle-show": () => setShowMode(!showMode),
   previous: previousStage,
   next: nextStage,
@@ -510,14 +601,7 @@ const actions = {
       block: "center",
     });
   },
-  "enlarge-plant": (button) => {
-    const plant = PLANTS[session.biology.plant];
-    $("#large-photo").src = plant.image;
-    $("#large-photo").alt = plant.name;
-    $("#photo-caption").textContent =
-      `${plant.name}. ${plant.caption} Фото ${plant.author} · ${plant.license}`;
-    showDialog(photoDialog, button);
-  },
+
 };
 document.addEventListener("click", (event) => {
   const button = event.target.closest("button");
@@ -538,10 +622,6 @@ document.addEventListener("click", (event) => {
   if (button.dataset.karst !== undefined) {
     session.karst.karstStep = Number(button.dataset.karst);
     updateVisual();
-    return;
-  }
-  if (button.dataset.plant !== undefined) {
-    changePlant(Number(button.dataset.plant));
     return;
   }
   if (button.dataset.pressure) {
@@ -616,7 +696,7 @@ chapterDialog.addEventListener("close", () => {
   if (document.fullscreenElement === chapterDialog)
     document.exitFullscreen().catch(() => {});
 });
-[chapterDialog, infoDialog, photoDialog].forEach((dialog) =>
+[chapterDialog, infoDialog, photoDialog, RedBook.dialog].forEach((dialog) =>
   dialog.addEventListener("click", (event) => {
     if (event.target !== dialog) return;
     const rect = dialog.getBoundingClientRect();
@@ -629,7 +709,7 @@ chapterDialog.addEventListener("close", () => {
       closeDialog(dialog);
   }),
 );
-[chapterDialog, infoDialog, photoDialog].forEach((dialog) =>
+[chapterDialog, infoDialog, photoDialog, RedBook.dialog].forEach((dialog) =>
   dialog.addEventListener("close", () => {
     syncDialogState();
     const parent = topDialog();
@@ -699,3 +779,16 @@ window.addEventListener("storage", (event) => {
 loadProgress();
 renderRoute();
 setupMap();
+RedBook.init({
+  showDialog,
+  closeDialog,
+  enterMap: enterBiology,
+  showPlace: showPlantPlace,
+  onExplore: () => {
+    if (progress.biology.done) return;
+    progress.biology.done = true;
+    persist("biology");
+    renderRoute();
+  },
+});
+if (typeof location !== "undefined" && location.hash === "#biology") enterBiology();

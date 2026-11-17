@@ -28,6 +28,9 @@ function application(seed = {}, denyStorage = false) {
         },
       },
       setAttribute: (key, value) => attributes.set(key, String(value)),
+      removeAttribute: (key) => attributes.delete(key),
+      querySelector: (key) => element(key),
+      querySelectorAll: () => [],
       getAttribute: (key) => attributes.get(key),
       addEventListener(type, handler) { events[`${selector}:${type}`] = handler; },
       append(child) { child.parentElement = node; },
@@ -44,14 +47,14 @@ function application(seed = {}, denyStorage = false) {
   doc.addEventListener = (type, handler) => { events[`document:${type}`] = handler; };
   const context = vm.createContext({
     document: doc, matchMedia: () => ({ matches: false }),
-    window: { addEventListener(type, handler) { events[`window:${type}`] = handler; } },
+    window: { scrollTo() {}, addEventListener(type, handler) { events[`window:${type}`] = handler; } },
     localStorage: {
       getItem(key) { if (denyStorage) throw Error('blocked'); return storage.get(key) ?? null; },
       setItem(key, value) { if (denyStorage) throw Error('blocked'); storage.set(key, value); },
     },
     setTimeout: () => 1, clearTimeout() {}, console,
   });
-  for (const file of ['content.js', 'scenes.js', 'app.js']) {
+  for (const file of ['content.js', 'scenes.js', 'biology.js', 'app.js']) {
     vm.runInContext(fs.readFileSync(path.join(root, 'dist', file), 'utf8'), context);
   }
   return { read: (code) => vm.runInContext(code, context), element, storage, events };
@@ -75,6 +78,54 @@ test('all stops have valid answers, sources and local images', () => {
     assert.ok(fs.existsSync(path.join(root, 'dist', item.image)), item.image);
   }
   assert.equal(app.read('SITE_URL'), 'https://fegke12.github.io/vozhega-map/');
+});
+
+test('red book places and species have consistent two-way links', () => {
+  const app = application();
+  const plants = app.read('RED_BOOK_PLANTS');
+  const places = app.read('PLANT_PLACES');
+  assert.equal(plants.length, 3);
+  assert.equal(places.length, 3);
+  assert.equal(new Set(plants.map((plant) => plant.id)).size, plants.length);
+  for (const plant of plants) {
+    assert.ok(fs.existsSync(path.join(root, 'dist', plant.image)));
+    assert.ok(plant.description.length > 50 && plant.description.length < 500);
+    assert.ok(!/сверк|атлас|координат|автор/i.test(plant.description));
+    for (const id of plant.places) {
+      const place = places.find((item) => item.id === id);
+      assert.ok(place && place.plantIds.includes(plant.id));
+    }
+  }
+  for (const place of places) {
+    for (const id of place.plantIds) {
+      assert.ok(plants.some((plant) => plant.id === id && plant.places.includes(place.id)));
+    }
+  }
+  assert.equal(places.find((place) => place.id === 'maryinskaya').coords.join(','), '60.54,40.419');
+  assert.equal(places.find((place) => place.id === 'kubena').coords.join(','), '60.448,40.777');
+});
+
+test('biology map replaces the old chapter and restores the excursion', () => {
+  const app = application();
+  app.read('openChapter("biology")');
+  assert.equal(app.element('#chapter-dialog').open, false);
+  assert.equal(app.element('#biology-sidebar').hidden, false);
+  assert.equal(app.element('#general-sidebar').hidden, true);
+  assert.equal(app.element('body').classList.contains('biology-mode'), true);
+  app.read('exitBiology()');
+  assert.equal(app.element('#biology-sidebar').hidden, true);
+  assert.equal(app.element('#general-sidebar').hidden, false);
+});
+
+test('book selection preserves a valid clicked locality and rejects invalid plant IDs', () => {
+  const app = application();
+  app.read('RedBook.open("calceolus", "maryinskaya")');
+  assert.equal(app.read('RedBook.currentPlant().id'), 'calceolus');
+  assert.equal(app.read('RedBook.currentPlace().id'), 'maryinskaya');
+  app.read('RedBook.open("macranthos", "maryinskaya")');
+  assert.equal(app.read('RedBook.currentPlace().id'), 'orchids');
+  app.read('RedBook.open("not-a-plant")');
+  assert.equal(app.read('RedBook.currentPlant().id'), 'macranthos');
 });
 
 test('malformed and primitive saved values do not break startup', () => {

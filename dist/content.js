@@ -188,10 +188,10 @@ const STOPS = [
     place: "Северные орхидеи",
     subject: "Биология",
     color: "#aa7e9d",
-    short: "Замечать редкую жизнь",
+    short: "Открыть Красную книгу",
     kicker: "ТРЕТЬЯ СТРАНИЦА · БИОЛОГИЯ",
     lead: "Орхидеи можно встретить и в северном лесу.",
-    body: "В документах памятника природы названы башмачок обыкновенный, башмачок крупноцветковый, калипсо клубневая и гудайера ползучая. Познакомься с тремя видами в фотографическом атласе.",
+    body: "Красная книга знакомит с редкими орхидеями Вожегодского округа. Нажми на метку растения на карте или открой книгу и рассмотри фотографии.",
     question: "Как сохранить маленькую лесную находку?",
     coords: [60.536805556, 39.513888889],
     location: "60.53681° N · 39.51389° E",
@@ -244,5 +244,51 @@ const STOPS = [
       "При постоянных плотности воды и ускорении свободного падения p = ρgh. Удвоение глубины удваивает давление столба воды.",
     takeaway:
       "Гидростатическое давление растёт пропорционально глубине. Полное давление дополнительно включает давление над поверхностью.",
+  },
+];
+
+// The overview map uses published localities. Full provenance is documented in README.
+const RED_BOOK_PLANTS = [
+  {
+    id: "calceolus", plantIndex: 1,
+    name: "Башмачок настоящий", image: PLANTS[1].image,
+    description: "Лесная орхидея с яркой жёлтой «туфелькой» и тёмно-каштановыми лепестками. Растёт в хвойных и смешанных лесах на хорошо увлажнённой почве. Во время цветения её необычный цветок особенно заметен среди зелени.",
+    places: ["orchids", "maryinskaya", "kubena"],
+    imagePosition: "center center",
+  },
+  {
+    id: "macranthos", plantIndex: 0,
+    name: "Башмачок крупноцветковый", image: PLANTS[0].image,
+    description: "Крупный розовый или лиловый цветок этой орхидеи похож на маленькую туфельку. В Вожегодском округе растение известно на территории «Северных орхидей». Чтобы увидеть его красоту, достаточно внимательно присмотреться к лесной зелени.",
+    places: ["orchids"],
+    imagePosition: "center center",
+  },
+  {
+    id: "calypso", plantIndex: 2,
+    name: "Калипсо клубневая", image: PLANTS[2].image,
+    description: "Маленькая северная орхидея с одним розовым цветком и одним морщинистым листом. Она прячется среди мха в хвойных лесах и обычно вырастает не выше 15 сантиметров. Цветёт в конце мая — начале июня.",
+    places: ["orchids"],
+    imagePosition: "center center",
+  },
+];
+const PLANT_PLACES = [
+  {
+    id: "orchids", name: "Северные орхидеи",
+    coords: [60.536805556, 39.513888889],
+    plantIds: ["calceolus", "macranthos", "calypso"],
+    // Representative point inside the protected area, not an orchid specimen location.
+    kind: "area", sourceIds: ["orchids", "point"],
+  },
+  {
+    id: "maryinskaya", name: "У Марьинской",
+    coords: [60.540, 40.419], plantIds: ["calceolus"],
+    kind: "published-locality", year: 2003,
+    source: "https://sciup.org/148326120",
+  },
+  {
+    id: "kubena", name: "Берег Кубены",
+    coords: [60.448, 40.777], plantIds: ["calceolus"],
+    kind: "published-locality", year: 2003, herbarium: "VO 35052",
+    source: "https://sciup.org/148326120",
   },
 ];
